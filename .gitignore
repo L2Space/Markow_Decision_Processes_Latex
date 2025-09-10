@@ -1,0 +1,13 @@
+# ignore all auxilliary Latex - files
+# including .pdf
+
+*.aux
+*.fls
+*.log
+*.nav
+*.snm
+*.toc
+*.synctex.gz
+*.pdf
+*.out
+*.fdb_latexmk
