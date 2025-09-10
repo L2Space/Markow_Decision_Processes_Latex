@@ -5,10 +5,11 @@
 \usepackage{tikz}
 
 \usetheme{metropolis}
+% \usetheme{Warsaw}
 \title{Markow Decision Processes and Reinforcement Learning}
-\author{K. Drozd, M. Zięć}
+\author{Kacper Drozd, Michal Zięć}
 \institute{Uniwersytet Jagielloński w Krakowie}
-\date{\today}
+\date[]{XXVI International Workshop for Young Mathematicians "Combinatorics" 15-20/09/2025}
 
 % Define auxilliaty aliases
 \newcommand{\Natural}{\mathbb{N}}
@@ -32,14 +33,14 @@
 \subsection{Introduction}
 \begin{frame}{Markow Decision Process}
     \centering
-    discrete time Markow Process:\\
-    Stochstic Process $X_t$, $t \in \Natural$ admitting the \textbf{Markow Proprety}.
-    
-    (discrete) state space $ \State \ni s $
-
-    transition probability $ P[X_{t+1} = s' \mid X_t = s] $
-
-    \begin{tikzpicture}[scale=1]
+    \begin{block}{discrete time Markow Process}
+        Stochastic Process
+        \[X_t(\omega):\Natural\times\Omega \rightarrow \State\]
+        admitting the \alert<1>{Markow Property}, with (discrete) state space $ \State $.
+    \end{block}
+    \pause
+    \begin{figure}
+    \begin{tikzpicture}<2>[scale=1]
         % Draw nodes
         % Draw nodes explicitly
         \node[circle,draw,fill=white] (n00) at (0,0) {};
@@ -68,47 +69,62 @@
         \draw (n20) -- (n21);
         \draw (n21) -- (n22);
     \end{tikzpicture}
+    \end{figure}
+
+    \pause
+    transition probability:
+        \( P[X_{t+1} = s' \mid X_t = s] \)
+    
 \end{frame}
 
 \begin{frame}{Markow Decision Process}
     \centering
-    discrete time Markow \textbf{Decision} Process:\\
-    Agent which can take \textbf{actions} $a \in \Action(s)$ where $s \in \State$.\\
-    Feedback is given via \textbf{reward} $r \in \Real$
+    \begin{block}{discrete time Markow \alert<1>{Decision} Process}
+        Agent which can take \textbf{actions} $a \in \Action(s)$ where $s \in \State$.\\
+        Feedback is given via \textbf{reward} $r \in \Real$
+    \end{block}
 
-    transition probability $ P[X_{t+1} = s', R_{t+1} = r \mid X_t = s, A_t = a] $\\
-    Maximise expected reward: 
-    \[ \text{E}\left[\sum \limits_{t=0}^{\infty} R_t\right] \]
-    
+    \onslide*<2>{
+    \begin{figure}
     \begin{tikzpicture}[scale=1]
-        % Draw nodes
-        % Draw nodes explicitly
-        \node[circle,draw,fill=white] (n00) at (0,0) {};
-        \node[circle,draw,fill=white] (n01) at (0,1) {};
-        \node[circle,draw,fill=white] (n02) at (0,2) {};
-        \node[circle,draw,fill=white] (n10) at (1,0) {};
-        \node[circle,draw,fill=white] (n11) at (1,1) {};
-        \node[circle,draw,fill=white] (n12) at (1,2) {};
-        \node[circle,draw,fill=white] (n20) at (2,0) {};
-        \node[circle,draw,fill=white] (n21) at (2,1) {};
-        \node[circle,draw,fill=white] (n22) at (2,2) {};
-
-        % Draw horizontal edges explicitly
-        \draw (n00) -- (n10);
-        \draw (n10) -- (n20);
-        \draw (n01) -- (n11);
-        \draw (n11) -- (n21);
-        \draw (n02) -- (n12);
-        \draw (n12) -- (n22);
-
-        % Draw vertical edges explicitly
-        \draw (n00) -- (n01);
-        \draw (n01) -- (n02);
-        \draw (n10) -- (n11);
-        \draw (n11) -- (n12);
-        \draw (n20) -- (n21);
-        \draw (n21) -- (n22);
+        \draw (-2.5, 1.5) -- (-1.5, 2.5);
+        \draw (-2.5,-0.5) -- ( 0.5, 2.5);
+        \draw (-2.5,-2.5) -- ( 2.5, 2.5);
+        \draw (-0.5,-2.5) -- ( 2.5, 0.5);
+        \draw ( 1.5,-2.5) -- ( 2.5,-1.5);
+        
+        \draw (-1.5,-2.5) -- (-2.5,-1.5);
+        \draw ( 0.5,-2.5) -- (-2.5, 0.5);
+        \draw ( 2.5,-2.5) -- (-2.5, 2.5);
+        \draw ( 2.5,-0.5) -- (-0.5, 2.5);
+        \draw ( 2.5, 1.5) -- ( 1.5, 2.5);
+        
+        \filldraw[color=black, fill=white] (-2,-2) circle (3pt);
+        \filldraw[color=black, fill=white] (-2, 0) circle (3pt);
+        \filldraw[color=black, fill=white] (-2, 2) circle (3pt);
+        \filldraw[color=black, fill=white] ( 0,-2) circle (3pt);
+        \filldraw[color=black, fill=white] ( 0, 0) circle (3pt);
+        \filldraw[color=black, fill=white] ( 0, 2) circle (3pt);
+        \filldraw[color=black, fill=white] ( 2,-2) circle (3pt);
+        \filldraw[color=black, fill=white] ( 2, 0) circle (3pt);
+        \filldraw[color=black, fill=white] ( 2, 2) circle (3pt);
+        \filldraw[color=black, fill=white] (-1,-1) circle (3pt);
+        \filldraw[color=black, fill=white] (-1, 1) circle (3pt);
+        \filldraw[color=black, fill=white] ( 1,-1) circle (3pt);
+        \filldraw[color=black, fill=white] ( 1, 1) circle (3pt);
+                
     \end{tikzpicture}
+    \end{figure}
+    transition probability $ P[X_{t+1} = s', R_{t+1} = r \mid X_t = s, A_t = a] $
+    }
+
+    \onslide*<3>{
+    \begin{block}{Objective}
+    Maximise expected reward: 
+    \[ \text{E}\left[\sum \limits_{t=0}^{\infty} \beta^t R_t\right] \]
+    \end{block}
+    }
+
 \end{frame}
 
 
