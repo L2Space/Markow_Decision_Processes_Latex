@@ -1,8 +1,10 @@
-\documentclass{beamer}
+\documentclass[10pt]{beamer}
 
 \usepackage{polski}
 % Add TikZ package for drawing graphs
 \usepackage{tikz}
+\usepackage{xcolor}
+
 
 \usetheme{metropolis}
 % \usetheme{Warsaw}
@@ -131,5 +133,275 @@
 \subsection{Solving MDPs}
 \subsubsection{Transition Probabilities Known}
 \subsubsection{Given Data Incomplete}
+
+\begin{frame}
+    \begin{center}
+        Policy Gradient Methods
+    \end{center}
+\end{frame}
+
+\begin{frame}{Policy gradient method}
+
+    \textbf{Objective Function:}
+    \[
+    J(\theta) = \mathbb{E}_{\tau \sim p_{\theta}}[R(\tau)]
+    \]
+    where:
+    \begin{itemize}
+        \item $\tau = (s_0, a_0, s_1, a_1, \ldots)$ is a trajectory  
+        \item $R(\tau) = \sum_{t=0}^{\infty} \gamma^t r(s_t, a_t)$
+    \end{itemize}
+    \textcolor{red}{$R(\tau)$ is not a function of $\theta$}\\
+\pause
+    \textbf{Trajectory Distribution:}
+    \[
+    p_{\theta}(\tau)  = \rho(s_0) \prod_{t=0}^{\infty} \underbrace{\pi_\theta(a_t|s_t)P(s_{t+1}|s_t, a_t)}_{(s_t,a_t) \to s_{t+1}}
+    \]
+    where:
+    \begin{itemize}
+        \item $\rho(s_0)$: initial state distribution  
+        \item $P(s_{t+1} | s_t, a_t)$: environment dynamics  
+        \item $\pi_{\theta}(a_t | s_t)$: parameterized policy  
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{What are we trying to achieve?}
+
+\begin{itemize}
+\item Main idea is that we want to maximize $J(\theta)$ using only policy $\pi(\theta)$ \textit{because that is the part of whole system that we can fully control} 
+
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}    
+    Goal is to calculate
+    \[
+    \nabla_\theta J(\theta) = \nabla_\theta \mathbb{E}_{\tau \sim p_{\theta}}[R(\tau)] = \nabla_\theta \int p_\theta (\tau) R(\tau)  d\tau
+    \]
+    where
+    \[
+    p_\theta (\tau) = \rho (s_0) \prod_{t=0}^\infty \pi_\theta (a_t | s_t) P(s_{t+1} | s_t, a_t)
+    \]
+    \begin{center}
+    \textit{Question: Why would we want to avoid calculating that?}
+    \end{center}
+    \bigskip
+    \pause
+    We have 3 observations about $\nabla_\theta p(\theta)$
+    \pause
+    \begin{itemize}
+        \item It is going to be very messy
+        \pause
+        \item We usually don't know the function $P$
+        \pause
+        \item We would have to later integrate this abomination
+    \end{itemize}
+
+\end{frame}
+
+\begin{frame}
+    We can use the Log-derivative trick:
+    \[
+    \nabla_\theta p_\theta (\tau) = p_\theta (\tau) \nabla_\theta \log p_\theta (\tau)
+    \]
+    \pause    
+    And get the expression 
+    \[
+    \nabla_\theta J(\theta) = \int p_\theta (\tau) \nabla_\theta \log p_\theta (\tau) R(\tau)  d\tau = \mathbb{E}_{\tau \sim p_\theta} [\nabla_\theta \log p_\theta (\tau) R(\tau)]
+    \]
+    \[
+    \nabla_\theta J(\theta) = \int p_\theta (\tau) f_\theta(\tau) d\tau = \mathbb{E}_{\tau \sim p_\theta} [f_\theta(\tau)]
+    \]
+    
+\end{frame}
+
+\begin{frame}
+
+    Recall trajectory distribution:
+    \[
+    p_\theta(\tau) = \rho(s_0) \prod_{t=0}^\infty \pi_\theta(a_t | s_t) P(s_{t+1} | s_t, a_t)
+    \]
+
+    Log of trajectory density:
+    \[
+    \log p_\theta(\tau) = \log \rho(s_0) + \sum_{t=0}^\infty \log \pi_\theta(a_t | s_t) + \sum_{t=0}^\infty \log P(s_{t+1} | s_t, a_t)
+    \]
+\pause
+    Differentiate w.r.t. \(\theta\):
+    \[
+    \nabla_\theta \log p_\theta(\tau) = \nabla_\theta \log \rho(s_0) + \sum_{t=0}^\infty \nabla_\theta \log \pi_\theta(a_t | s_t) + \sum_{t=0}^\infty \nabla_\theta \log P(s_{t+1} | s_t, a_t)
+    \]
+
+    Key observation:
+    \begin{itemize}
+        \item \(\rho(s_0)\) does not depend on \(\theta\)
+        \item \(P(s_{t+1} | s_t, a_t)\) does not depend on \(\theta\)
+    \end{itemize}
+\pause
+    Hence their gradients are zero, leaving:
+    \[
+    \nabla_\theta \log p_\theta(\tau) = \sum_{t=0}^\infty \nabla_\theta \log \pi_\theta(a_t | s_t)
+    \]
+\end{frame}
+
+\begin{frame}
+    Final expression:
+    \[
+    \nabla_{\theta} J(\theta) = \mathbb{E} \left[ \sum_{t=0}^{\infty} \nabla_{\theta} \log \pi_{\theta}(a_t | s_t) G_t \right]
+    \]
+    This expression depends only on the policy \( \pi_{\theta} \), which we parameterize and can differentiate.
+
+    \bigskip
+    
+    Why Use \( G_t \) Instead of \( R(\tau) \):
+    \begin{itemize}
+        \item \( R(\tau) = \sum_{k=0}^{\infty} \gamma^{k} r(s_k, a_k) \) is the total return for the entire trajectory.
+        \item \( G_t = \sum_{k=t}^{\infty} \gamma^{k-t} r(s_k, a_k) \) uses only rewards from time \( t \) onward.
+    \end{itemize}
+    
+    \bigskip
+
+    \textit{Now we could just let our agent explore space, collect rewards, then approximate gradients using the Monte Carlo method, update the policy and explore the space again.}
+\end{frame}
+\begin{frame}
+    \begin{itemize}
+        \item We know that pure Monte Carlo method is not effective
+        \pause
+        \item We can express whole expression with $Advantage$ $function$
+    \end{itemize}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Actor - Critic Algorithm}
+
+    We have following 
+    \[
+    \nabla_{\theta} J(\theta) = \mathbb{E} \left[ \sum_{t=0}^{\infty} \nabla_{\theta} \log \pi_{\theta}(a_t | s_t) G_t \right] = \mathbb{E} \left[ \sum_{t=0}^{\infty} \nabla_{\theta} \log \pi_{\theta}(a_t | s_t) A_t \right]
+    \]
+    There is cool intuition behind why we prefer A_t
+    
+    where
+    \[
+    A_t = G_t - V(s_t)
+    \]
+  
+    but it requires good estimate of $A_t$
+    \pause
+    \bigskip
+    
+    Learning \( V(s) \):
+    We train a $Critic$ \( V_\phi(s) \) to approximate the true value function \( V(s) \) by minimizing TD loss based on the $Bellman$ $equation$:
+    \[
+    L_V(\phi) = \frac{1}{2} \left( r_t + \gamma V_\phi(s_{t+1}) - V_\phi(s_t) \right)^2
+    \]
+
+    \bigskip
+
+    In practice, we usually use neural networks as both policy $\pi_\theta$ and $V_\phi$ function (Actor and critic)
+\end{frame}
+
+\begin{frame}
+    \begin{figure}
+        \centering
+        \includegraphics[width=1\linewidth]{A2C.png}
+        \caption{source: https://www.geeksforgeeks.org/machine-learning/actor-critic-algorithm-in-reinforcement-learning/}
+        \label{fig:placeholder}
+    \end{figure}
+\end{frame}
+
+\begin{frame}
+    \begin{center}
+        Entropic risk measure
+    \end{center}    
+\end{frame}
+
+\begin{frame}
+    \frametitle{Risk-Sensitive Optimization}
+
+    Standard Objective (Risk-Neutral):
+    \[
+    J(\theta) = \mathbb{E}_{\tau \sim p_\theta}[R(\tau)]
+    \]
+    Maximizes the expected return 
+
+    \bigskip
+
+    \textbf{Entropic Risk-Sensitive Objective:}
+    \[
+    J_{\text{ent}}(\theta) = \frac{1}{\beta} \log \mathbb{E}_{\tau \sim p_\theta} \left[ \exp(\beta R(\tau)) \right]
+    \]
+    where
+    \begin{itemize}
+        \item \(\beta > 0\) makes the policy risk-seeking  
+        \item \(\beta < 0\) makes the policy risk-averse
+    \end{itemize}
+
+    Maximizes the expectancy of some transformation of the return.
+\end{frame}
+
+\begin{frame}
+    \begin{figure}
+        \centering
+        \includegraphics[width=1\linewidth]{wykres exponentian.png}
+        \label{fig:placeholder}
+    \end{figure}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Donsker-Varadhan Representation}
+
+\begin{block}{Theorem (Donsker, Varadhan)}
+    \textit{Let \( P \) and \( Q \) be two probability measures, with \( Q \) absolutely continuous w.r.t. \( P \).  
+    For any random variable \( X \):
+    \[
+    \frac{1}{\lambda}\log \mathbb{E}_{X \sim P} [e^{\lambda X}] = \sup_{Q \ll P} \left( \mathbb{E}_{X \sim Q} [X] - \frac{1}{\lambda}\mathbf{D}_{KL}(Q\|P) \right)
+    \]
+where $\mathbf{D}_{KL}(Q\|P)$ is the Kullback-Leibler divergence}
+\end{block}
+
+    \bigskip
+    
+    KL divergence is type of statistical distance between two probability distributions. \textit{It is a natural way to measure the similarity between them}
+    
+    \bigskip
+    
+    \pause
+    This theorem is a key concept behind $Robust$ $control$
+\end{frame}
+
+\begin{frame}{Generalized Bellman Equation}
+
+
+    Bellman Equation can be generalized wide range of functions called $Validation$ $functions$
+
+    \[
+    V^*(s) = \max_{a \in A(s)} \rho(R(s,a) + \gamma V^*(s'))
+    \]
+    where \(\rho(\cdot)\) is a monotone, translation-invariant risk functional
+\pause
+    \bigskip
+
+    If \(V^*\) satisfies the equation above, then
+    \[
+    V^*(s) = \max_{\pi} J_\rho(\pi,s) \quad \forall s \in \mathcal{S}
+    \]
+    and an optimal deterministic policy is given by
+    \[
+    \pi^*(s) = \arg \max_{a \in A(s)} \rho(R(s,a) + \gamma V^*(s'))
+    \]
+\end{frame}
+
+\begin{frame}
+
+    For the case with entropic risk measure
+    \[
+    \rho(X) = \frac{1}{\beta} \log \mathbb{E} \left[ e^{\beta X} \right],
+    \]
+    the risk-sensitive Bellman equation becomes:  
+    \[
+    V^*(s) = \max_{a \in A(s)} \frac{1}{\beta} \log \mathbb{E}\left[ \exp \left( \beta (R(s, a) + \gamma V^*(s')) \right) \right]
+    \]
+\end{frame}
 
 \end{document}
